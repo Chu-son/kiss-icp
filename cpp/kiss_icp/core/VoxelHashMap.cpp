@@ -140,6 +140,8 @@ std::vector<Eigen::Vector3d> VoxelHashMap::Pointcloud() const {
 void VoxelHashMap::Update(const Vector3dVector &points, const Eigen::Vector3d &origin) {
     AddPoints(points);
     RemovePointsFarFromLocation(origin);
+    RemovePointsParcentile();
+    LifetimeProcess();
 }
 
 void VoxelHashMap::Update(const Vector3dVector &points, const Sophus::SE3d &pose) {
@@ -158,7 +160,8 @@ void VoxelHashMap::AddPoints(const std::vector<Eigen::Vector3d> &points) {
             auto &voxel_block = search.value();
             voxel_block.AddPoint(point);
         } else {
-            map_.insert({voxel, VoxelBlock{{point}, max_points_per_voxel_}});
+            Lifetime lifetime;
+            map_.insert({voxel, VoxelBlock{{point}, max_points_per_voxel_, &lifetime}});
         }
     });
 }
@@ -172,4 +175,35 @@ void VoxelHashMap::RemovePointsFarFromLocation(const Eigen::Vector3d &origin) {
         }
     }
 }
+
+void VoxelHashMap::RemovePointsParcentile() {
+    std::vector<int> num_points;
+    num_points.reserve(map_.size());
+    for (const auto &[voxel, voxel_block] : map_) {
+        (void)voxel;
+        num_points.push_back(static_cast<int>(voxel_block.points.size()));
+    }
+    std::sort(num_points.begin(), num_points.end());
+    const int parcentile =
+        static_cast<int>(static_cast<float>(num_points.size()) * remove_parcentile_rate_);
+    const int threshold = num_points[parcentile];
+    for (auto it = map_.begin(); it != map_.end();) {
+        if (it->second.points.size() < static_cast<size_t>(threshold)) {
+            it = map_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+void VoxelHashMap::LifetimeProcess() {
+    for (auto &[voxel, voxel_block] : map_) {
+        (void)voxel;
+        voxel_block.lifetime_->decrement();
+        if (voxel_block.lifetime_->life_time_count < 0) {
+            map_.erase(voxel);
+        }
+    }
+}
+
 }  // namespace kiss_icp

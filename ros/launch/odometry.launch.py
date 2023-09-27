@@ -49,6 +49,8 @@ def generate_launch_description():
             DeclareLaunchArgument("deskew", default_value="false"),
             DeclareLaunchArgument("max_range", default_value="100.0"),
             DeclareLaunchArgument("min_range", default_value="5.0"),
+
+            DeclareLaunchArgument("remove_parcentile_rate", default_value="0.15"),
             # This thing is still not suported: https://github.com/ros2/launch/issues/290#issuecomment-1438476902
             #  DeclareLaunchArgument("voxel_size", default_value=None),
             Node(
@@ -65,11 +67,13 @@ def generate_launch_description():
                         "min_range": LaunchConfiguration("min_range"),
                         "deskew": LaunchConfiguration("deskew"),
                         #  "voxel_size": LaunchConfiguration("voxel_size"),
-                        "max_points_per_voxel": 20,
+                        # "max_points_per_voxel": 20,
+                        "max_points_per_voxel": 50,
                         "initial_threshold": 2.0,
                         "min_motion_th": 0.1,
                         "publish_odom_tf": LaunchConfiguration("publish_odom_tf"),
                         "publish_alias_tf": LaunchConfiguration("publish_alias_tf"),
+                        "remove_parcentile_rate": LaunchConfiguration("remove_parcentile_rate"),
                     }
                 ],
             ),

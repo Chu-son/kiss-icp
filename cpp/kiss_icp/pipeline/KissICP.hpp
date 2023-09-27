@@ -44,6 +44,8 @@ struct KISSConfig {
 
     // Motion compensation
     bool deskew = false;
+
+    double remove_parcentile_rate = 0.15;
 };
 
 class KissICP {
@@ -54,7 +56,7 @@ public:
 public:
     explicit KissICP(const KISSConfig &config)
         : config_(config),
-          local_map_(config.voxel_size, config.max_range, config.max_points_per_voxel),
+          local_map_(config.voxel_size, config.max_range, config.max_points_per_voxel, config.remove_parcentile_rate),
           adaptive_threshold_(config.initial_threshold, config.min_motion_th, config.max_range) {}
 
     KissICP() : KissICP(KISSConfig{}) {}

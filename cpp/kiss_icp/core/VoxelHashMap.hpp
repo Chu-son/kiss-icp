@@ -37,11 +37,19 @@ struct VoxelHashMap {
     using Vector3dVector = std::vector<Eigen::Vector3d>;
     using Vector3dVectorTuple = std::tuple<Vector3dVector, Vector3dVector>;
     using Voxel = Eigen::Vector3i;
+    struct Lifetime {
+        int life_time_count = 0;
+        inline void Reset() { life_time_count = 0; }
+        inline void increment() { life_time_count+=2; }
+        inline void decrement() { life_time_count-=1; }
+    };
     struct VoxelBlock {
         // buffer of points with a max limit of n_points
         std::vector<Eigen::Vector3d> points;
         int num_points_;
+        Lifetime* lifetime_;
         inline void AddPoint(const Eigen::Vector3d &point) {
+            lifetime_->increment();
             if (points.size() < static_cast<size_t>(num_points_)) points.push_back(point);
         }
     };
@@ -52,10 +60,14 @@ struct VoxelHashMap {
         }
     };
 
-    explicit VoxelHashMap(double voxel_size, double max_distance, int max_points_per_voxel)
+    explicit VoxelHashMap(double voxel_size,
+                          double max_distance,
+                          int max_points_per_voxel,
+                          double remove_parcentile_rate)
         : voxel_size_(voxel_size),
           max_distance_(max_distance),
-          max_points_per_voxel_(max_points_per_voxel) {}
+          max_points_per_voxel_(max_points_per_voxel),
+          remove_parcentile_rate_(remove_parcentile_rate) {}
 
     Vector3dVectorTuple GetCorrespondences(const Vector3dVector &points,
                                            double max_correspondance_distance) const;
@@ -67,9 +79,15 @@ struct VoxelHashMap {
     void RemovePointsFarFromLocation(const Eigen::Vector3d &origin);
     std::vector<Eigen::Vector3d> Pointcloud() const;
 
+    void RemovePointsParcentile();
+    void LifetimeProcess();
+
     double voxel_size_;
     double max_distance_;
     int max_points_per_voxel_;
+
+    double remove_parcentile_rate_;
+
     tsl::robin_map<Voxel, VoxelBlock, VoxelHash> map_;
 };
 }  // namespace kiss_icp

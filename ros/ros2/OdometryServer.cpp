@@ -64,6 +64,7 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
     config_.max_points_per_voxel = declare_parameter<int>("max_points_per_voxel", config_.max_points_per_voxel);
     config_.initial_threshold = declare_parameter<double>("initial_threshold", config_.initial_threshold);
     config_.min_motion_th = declare_parameter<double>("min_motion_th", config_.min_motion_th);
+    config_.remove_parcentile_rate = declare_parameter<double>("remove_parcentile_rate", config_.remove_parcentile_rate);
     if (config_.max_range < config_.min_range) {
         RCLCPP_WARN(get_logger(), "[WARNING] max_range is smaller than min_range, settng min_range to 0.0");
         config_.min_range = 0.0;
